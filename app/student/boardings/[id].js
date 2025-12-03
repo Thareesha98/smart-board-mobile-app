@@ -170,9 +170,13 @@ export default function BoardingDetailScreen() {
                 </TouchableOpacity>
 
 
-            <TouchableOpacity style={styles.secondaryButton}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push(`/student/boardings/${id}/register`)}
+            >
               <Text style={styles.secondaryButtonText}>Register / Book</Text>
             </TouchableOpacity>
+
 
             <TouchableOpacity style={styles.dangerButton}>
               <Text style={styles.dangerButtonText}>Report Issue</Text>
