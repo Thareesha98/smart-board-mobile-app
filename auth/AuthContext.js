@@ -1,10 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import {
-  saveAuth,
-  getUser,
-  getToken,
-  clearAuth
-} from "../client/authStorage";
+import { saveAuth, getUser, getToken, clearAuth } from "../client/authStorage";
 
 export const AuthContext = createContext();
 
@@ -12,14 +7,21 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load saved user from storage at app start
   useEffect(() => {
-    const loadUser = async () => {
+    const load = async () => {
       const storedUser = await getUser();
-      if (storedUser) setUser(storedUser);
+      const token = await getToken();
+
+      if (storedUser && token) {
+        setUser(storedUser);
+      } else {
+        setUser(null);
+      }
+
       setLoading(false);
     };
-    loadUser();
+
+    load();
   }, []);
 
   const login = async (token, refreshToken, userObj) => {

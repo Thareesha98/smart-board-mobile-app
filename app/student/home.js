@@ -1,4 +1,10 @@
 import React, { useContext } from "react";
+import useNotifications from "../../hooks/useNotifications";
+import useUnreadNotifications from "../../hooks/useUnreadNotifications";
+import { Ionicons } from "@expo/vector-icons";
+import { triggerLocalNotification } from "../../hooks/useNotifications";
+
+
 import {
   View,
   Text,
@@ -7,12 +13,16 @@ import {
   ScrollView,
   SafeAreaView,
 } from "react-native";
+
 import { AuthContext } from "../../auth/AuthContext";
 import { useRouter } from "expo-router";
 
 export default function StudentHome() {
   const { user, logout } = useContext(AuthContext);
   const router = useRouter();
+
+  useNotifications();
+  const unread = useUnreadNotifications(); // 🔥 Get unread badge count
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -24,6 +34,14 @@ export default function StudentHome() {
         </Text>
         <Text style={styles.subHeader}>What would you like to do today?</Text>
 
+        <TouchableOpacity
+          style={{ marginTop: 12, padding: 10, backgroundColor: "#2563eb", borderRadius: 8 }}
+          onPress={() => triggerLocalNotification("Test from Expo Go", "This tests notification UI")}
+        >
+          <Text style={{ color: "white", fontWeight: "700" }}>Send Test Notification</Text>
+        </TouchableOpacity>
+
+
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -33,9 +51,13 @@ export default function StudentHome() {
               title="Find Boarding"
               onPress={() => router.push("/student/boardings")}
             />
+
+            {/* Notifications + Badge */}
             <HomeCard
-              title="My Payments"
-              onPress={() => router.push("/student/payments")}
+              title="Notifications"
+              icon={<Ionicons name="notifications-outline" size={22} color="#facc15" />}
+              badge={unread}
+              onPress={() => router.push("/notifications")}
             />
           </View>
 
@@ -44,6 +66,7 @@ export default function StudentHome() {
               title="Appointments"
               onPress={() => router.push("/student/appointments")}
             />
+
             <HomeCard
               title="Report Issue"
               onPress={() => router.push("/student/report")}
@@ -77,10 +100,19 @@ export default function StudentHome() {
   );
 }
 
-/* 🔹 Reusable Card Component */
-function HomeCard({ title, onPress }) {
+/* 🔹 Reusable Card Component — NOW WITH BADGE SUPPORT */
+function HomeCard({ title, icon, badge, onPress }) {
   return (
     <TouchableOpacity activeOpacity={0.9} style={styles.card} onPress={onPress}>
+      <View style={styles.cardIconRow}>
+        {icon}
+        {badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge}</Text>
+          </View>
+        )}
+      </View>
+
       <Text style={styles.cardTitle}>{title}</Text>
     </TouchableOpacity>
   );
@@ -139,12 +171,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
+    alignItems: "center",
   },
+
+  cardIconRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  badge: {
+    backgroundColor: "#ef4444",
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+    minWidth: 22,
+    alignItems: "center",
+  },
+  badgeText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#f8fafc",
     textAlign: "center",
+    marginTop: 8,
   },
 
   billBox: {

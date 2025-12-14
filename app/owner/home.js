@@ -1,4 +1,8 @@
 import React, { useContext } from "react";
+import useNotifications from "../../hooks/useNotifications";
+import useUnreadNotifications from "../../hooks/useUnreadNotifications";
+import { triggerLocalNotification } from "../../hooks/useNotifications";
+
 import {
   View,
   Text,
@@ -7,6 +11,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from "react-native";
+
 import { AuthContext } from "../../auth/AuthContext";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
@@ -14,6 +19,9 @@ import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 export default function OwnerHome() {
   const { user, logout } = useContext(AuthContext);
   const router = useRouter();
+
+  useNotifications();
+  const unread = useUnreadNotifications(); // 🔥 Notification badge count
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -50,8 +58,17 @@ export default function OwnerHome() {
           />
         </View>
 
-        {/* Quick Actions Section */}
+        {/* Quick Actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
+
+        <TouchableOpacity
+          style={{ marginTop: 12, padding: 10, backgroundColor: "#2563eb", borderRadius: 8 }}
+          onPress={() => triggerLocalNotification("Test from Expo Go", "This tests notification UI")}
+        >
+          <Text style={{ color: "white", fontWeight: "700" }}>Send Test Notification</Text>
+        </TouchableOpacity>
+
+
 
         <View style={styles.actionGrid}>
           <ActionCard
@@ -84,14 +101,16 @@ export default function OwnerHome() {
             onPress={() => router.push("/owner/utilities")}
           />
 
+          {/* 🔥 Notifications with Badge */}
           <ActionCard
-            title="Reports"
-            icon={<Ionicons name="alert-circle-outline" size={26} color="#ef4444" />}
-            onPress={() => router.push("/owner/reports")}
+            title="Notifications"
+            icon={<Ionicons name="notifications-outline" size={26} color="#facc15" />}
+            badge={unread}
+            onPress={() => router.push("/notifications")}
           />
         </View>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -112,10 +131,19 @@ function StatCard({ icon, label, value }) {
   );
 }
 
-function ActionCard({ title, icon, onPress }) {
+function ActionCard({ title, icon, badge, onPress }) {
   return (
-    <TouchableOpacity activeOpacity={0.8} style={styles.actionCard} onPress={onPress}>
-      <View style={styles.actionIcon}>{icon}</View>
+    <TouchableOpacity activeOpacity={0.85} style={styles.actionCard} onPress={onPress}>
+      <View style={styles.actionIcon}>
+        {icon}
+
+        {badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge}</Text>
+          </View>
+        )}
+      </View>
+
       <Text style={styles.actionText}>{title}</Text>
     </TouchableOpacity>
   );
@@ -124,27 +152,13 @@ function ActionCard({ title, icon, onPress }) {
 /* --------------------------- STYLES --------------------------- */
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-  },
-  container: {
-    padding: 18,
-    paddingBottom: 50,
-  },
+  safe: { flex: 1, backgroundColor: "#0f172a" },
+  container: { padding: 18, paddingBottom: 50 },
 
-  header: {
-    color: "white",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  sub: {
-    fontSize: 14,
-    color: "#94a3b8",
-    marginBottom: 25,
-  },
+  header: { color: "white", fontSize: 28, fontWeight: "700" },
+  sub: { fontSize: 14, color: "#94a3b8", marginBottom: 25 },
 
-  /* Stats Grid (2x2) */
+  /* Stats */
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -160,17 +174,8 @@ const styles = StyleSheet.create({
     borderColor: "#334155",
     alignItems: "center",
   },
-  statValue: {
-    color: "white",
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: 8,
-  },
-  statLabel: {
-    color: "#94a3b8",
-    marginTop: 4,
-    fontSize: 12,
-  },
+  statValue: { color: "white", fontSize: 22, fontWeight: "700", marginTop: 8 },
+  statLabel: { color: "#94a3b8", marginTop: 4, fontSize: 12 },
 
   sectionTitle: {
     color: "white",
@@ -180,7 +185,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  /* Quick Actions Grid (3 per row) */
+  /* Quick Actions */
   actionGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -197,9 +202,25 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     alignItems: "center",
   },
-  actionIcon: {
-    marginBottom: 10,
+  actionIcon: { marginBottom: 10, position: "relative" },
+
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -8,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: "center",
   },
+  badgeText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: 11,
+  },
+
   actionText: {
     color: "#f8fafc",
     fontSize: 15,
