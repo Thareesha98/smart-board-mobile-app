@@ -34,12 +34,12 @@ export default function StudentHome() {
         </Text>
         <Text style={styles.subHeader}>What would you like to do today?</Text>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{ marginTop: 12, padding: 10, backgroundColor: "#2563eb", borderRadius: 8 }}
           onPress={() => triggerLocalNotification("Test from Expo Go", "This tests notification UI")}
         >
           <Text style={{ color: "white", fontWeight: "700" }}>Send Test Notification</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
 
         {/* Quick Actions */}
@@ -60,6 +60,12 @@ export default function StudentHome() {
               onPress={() => router.push("/notifications")}
             />
           </View>
+
+          <HomeCard
+              title="My Boarding"
+              onPress={() => router.push("/student/registrations")}
+            />
+
 
           <View style={styles.row}>
             <HomeCard

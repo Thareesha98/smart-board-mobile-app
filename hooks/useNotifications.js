@@ -59,8 +59,8 @@ export default function useNotifications() {
     });
 
     return () => {
-      if (receivedListener.current) Notifications.removeNotificationSubscription(receivedListener.current);
-      if (responseListener.current) Notifications.removeNotificationSubscription(responseListener.current);
+    //  if (receivedListener.current) Notifications.removeNotificationSubscription(receivedListener.current);
+     // if (responseListener.current) Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, [user]);
 }
