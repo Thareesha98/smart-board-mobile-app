@@ -61,12 +61,12 @@ export default function OwnerHome() {
         {/* Quick Actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{ marginTop: 12, padding: 10, backgroundColor: "#2563eb", borderRadius: 8 }}
           onPress={() => triggerLocalNotification("Test from Expo Go", "This tests notification UI")}
         >
           <Text style={{ color: "white", fontWeight: "700" }}>Send Test Notification</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
 
 
