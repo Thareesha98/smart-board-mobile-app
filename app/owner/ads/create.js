@@ -23,6 +23,8 @@ import AmenitiesSelector from "../../../components/owner/AmenitiesSelector";
 import NearbyPlaces from "../../../components/owner/NearbyPlaces";
 import DistrictSelector from "../../../components/owner/DistrictSelector";
 
+const PLACEHOLDER_COLOR = "#8e8e8e";
+
 export default function CreateAd() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
@@ -94,6 +96,7 @@ export default function CreateAd() {
 
       <TextInput
         style={styles.input}
+        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Title"
         value={form.title}
         onChangeText={(t) => update("title", t)}
@@ -101,6 +104,7 @@ export default function CreateAd() {
 
       <TextInput
         style={[styles.input, { height: 80 }]}
+        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Description"
         multiline
         value={form.description}
@@ -110,6 +114,7 @@ export default function CreateAd() {
       {/* Address fields */}
       <TextInput
         style={styles.input}
+        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Number & Lane"
         value={addressLine}
         onChangeText={setAddressLine}
@@ -117,6 +122,7 @@ export default function CreateAd() {
 
       <TextInput
         style={styles.input}
+        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="City"
         value={city}
         onChangeText={setCity}
@@ -127,6 +133,7 @@ export default function CreateAd() {
       <TextInput
         style={styles.input}
         placeholder="Price per Month (Rs)"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         keyboardType="numeric"
         value={form.pricePerMonth}
         onChangeText={(t) => update("pricePerMonth", t)}
@@ -135,6 +142,7 @@ export default function CreateAd() {
       <View style={styles.row}>
         <TextInput
           style={[styles.input, { flex: 1, marginRight: 5 }]}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           placeholder="Available Slots"
           keyboardType="numeric"
           value={form.availableSlots}
@@ -142,6 +150,7 @@ export default function CreateAd() {
         />
         <TextInput
           style={[styles.input, { flex: 1, marginLeft: 5 }]}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           placeholder="Max Occupants"
           keyboardType="numeric"
           value={form.maxOccupants}
@@ -195,6 +204,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     backgroundColor: "white",
+    color: "black",
+  
   },
   row: {
     flexDirection: "row",
