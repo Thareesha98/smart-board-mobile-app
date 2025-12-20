@@ -103,7 +103,7 @@ export default function StudentRegistrations() {
               <View style={styles.actionsRow}>
                 <TouchableOpacity
                   style={styles.viewBtn}
-                  onPress={() => router.push(`/student/boardings/${r.boardingId}`)}
+                  onPress={() => router.push(`/student/my-boarding/${r.id}`)}
                 >
                   <Text style={styles.viewBtnText}>View Boarding</Text>
                 </TouchableOpacity>
