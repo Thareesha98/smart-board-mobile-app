@@ -28,7 +28,13 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>sbmsmobile</string>
-          <string>com.anonymous.sbmsmobile</string>
+          <string>com.thareesha.sbmsmobile</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+sbms-mobile</string>
         </array>
       </dict>
     </array>
