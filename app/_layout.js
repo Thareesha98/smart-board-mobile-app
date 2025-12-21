@@ -68,6 +68,7 @@ function NavigationGate() {
       "register",
       "verify-otp",
       "forgot-password",
+      "reset-password", 
     ];
 
     const isAuthRoute = authRoutes.includes(firstSegment);
