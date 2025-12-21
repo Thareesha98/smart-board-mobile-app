@@ -1,4 +1,4 @@
-import { Stack, useRouter, useSegments } from "expo-router";
+/*import { Stack, useRouter, useSegments } from "expo-router";
 import { AuthProvider, AuthContext } from "../auth/AuthContext";
 import { useContext, useEffect } from "react";
 
@@ -21,6 +21,72 @@ function NavigationGate() {
       if (user.role === "OWNER") router.replace("/owner/home");
       else if (user.role === "STUDENT") router.replace("/student/home");
       else if (user.role === "ADMIN") router.replace("/admin/home");
+    }
+  }, [user, loading, segments]);
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <NavigationGate />
+    </AuthProvider>
+  );
+}
+*/
+
+
+
+
+
+import { Stack, useRouter, useSegments } from "expo-router";
+import { AuthProvider, AuthContext } from "../auth/AuthContext";
+import { useContext, useEffect } from "react";
+
+function NavigationGate() {
+  const { user, loading } = useContext(AuthContext);
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) return;
+
+    /**
+     * segments example:
+     *  [] → /
+     *  ["register"]
+     *  ["verify-otp"]
+     *  ["student", "home"]
+     */
+
+    const firstSegment = segments[0];
+
+    const authRoutes = [
+      undefined,        // "/"
+      "login",
+      "register",
+      "verify-otp",
+      "forgot-password",
+    ];
+
+    const isAuthRoute = authRoutes.includes(firstSegment);
+
+    // 🔒 NOT logged in → block protected routes
+    if (!user && !isAuthRoute) {
+      router.replace("/");
+      return;
+    }
+
+    // 🚀 Logged in → block auth pages
+    if (user && isAuthRoute) {
+      if (user.role === "OWNER") {
+        router.replace("/owner/home");
+      } else if (user.role === "STUDENT") {
+        router.replace("/student/home");
+      } else if (user.role === "ADMIN") {
+        router.replace("/admin/home");
+      }
     }
   }, [user, loading, segments]);
 
