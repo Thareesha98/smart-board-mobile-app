@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import api from "../../../client/api";
 import { AuthContext } from "../../../auth/AuthContext";
 import { useRouter } from "expo-router";
@@ -38,7 +39,7 @@ export default function StudentRegistrations() {
     }
   };
 
-  const cancelRegistration = async (regId) => {
+  const cancelRegistration = (regId) => {
     Alert.alert(
       "Cancel Registration",
       "Are you sure you want to cancel this registration?",
@@ -46,13 +47,14 @@ export default function StudentRegistrations() {
         { text: "No" },
         {
           text: "Yes, cancel",
+          style: "destructive",
           onPress: async () => {
             try {
-              await api.put(`/registrations/student/${studentId}/${regId}/cancel`);
-              Alert.alert("Cancelled", "Registration cancelled.");
+              await api.put(
+                `/registrations/student/${studentId}/${regId}/cancel`
+              );
               loadRegs();
             } catch (err) {
-              console.log("❌ cancel reg", err);
               Alert.alert("Error", "Unable to cancel registration.");
             }
           },
@@ -64,7 +66,7 @@ export default function StudentRegistrations() {
   if (loading) {
     return (
       <SafeAreaView style={styles.loader}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#38bdf8" />
       </SafeAreaView>
     );
   }
@@ -72,40 +74,64 @@ export default function StudentRegistrations() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>My Registrations</Text>
+        <Text style={styles.header}>My Boardings</Text>
+        <Text style={styles.subHeader}>
+          Active & past boarding registrations
+        </Text>
 
         {regs.length === 0 ? (
-          <Text style={styles.noData}>You have no registrations.</Text>
+          <Text style={styles.noData}>No registrations found.</Text>
         ) : (
           regs.map((r) => (
             <View key={r.id} style={styles.card}>
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.title}>{r.boardingTitle}</Text>
-                  <Text style={styles.sub}>{r.boardingId ? r.boardingId : ""} • {r.studentName}</Text>
-                </View>
-                <View style={styles.badgeContainer}>
-                  <Text style={[styles.badgeText, statusColor(r.status)]}>{r.status}</Text>
-                </View>
+              {/* STATUS BADGE */}
+              <View style={[styles.statusBadge, statusStyle(r.status)]}>
+                <Text style={styles.statusText}>{r.status}</Text>
               </View>
 
-              <Text style={styles.info}>Students: {r.numberOfStudents}</Text>
-              <Text style={styles.info}>Key money: Rs {r.keyMoney}</Text>
-              <Text style={styles.noteLabel}>Your note</Text>
-              <Text style={styles.noteText}>{r.studentNote || "—"}</Text>
-              {r.ownerNote ? (
-                <>
-                  <Text style={styles.noteLabel}>Owner note</Text>
-                  <Text style={styles.noteText}>{r.ownerNote}</Text>
-                </>
+              {/* TITLE */}
+              <Text style={styles.title}>{r.boardingTitle}</Text>
+
+              {/* INFO */}
+              <View style={styles.metaRow}>
+                <Ionicons name="people-outline" size={16} color="#94a3b8" />
+                <Text style={styles.metaText}>
+                  {r.numberOfStudents} student(s)
+                </Text>
+              </View>
+
+              <View style={styles.metaRow}>
+                <Ionicons name="cash-outline" size={16} color="#94a3b8" />
+                <Text style={styles.metaText}>
+                  Key Money: Rs. {r.keyMoney}
+                </Text>
+              </View>
+
+              {/* NOTES */}
+              {r.studentNote ? (
+                <Text style={styles.note}>📝 {r.studentNote}</Text>
               ) : null}
 
+              {r.ownerNote ? (
+                <Text style={styles.ownerNote}>🏠 {r.ownerNote}</Text>
+              ) : null}
+
+              {/* ACTIONS */}
               <View style={styles.actionsRow}>
                 <TouchableOpacity
-                  style={styles.viewBtn}
-                  onPress={() => router.push(`/student/my-boarding/${r.id}`)}
+                  style={styles.primaryBtn}
+                  onPress={() =>
+                    router.push(
+                      `/student/registrations/${r.id}/dashboard`
+                    )
+                  }
                 >
-                  <Text style={styles.viewBtnText}>View Boarding</Text>
+                  <Ionicons
+                    name="speedometer-outline"
+                    size={18}
+                    color="white"
+                  />
+                  <Text style={styles.primaryText}>Open Dashboard</Text>
                 </TouchableOpacity>
 
                 {r.status === "PENDING" && (
@@ -113,7 +139,11 @@ export default function StudentRegistrations() {
                     style={styles.cancelBtn}
                     onPress={() => cancelRegistration(r.id)}
                   >
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={18}
+                      color="white"
+                    />
                   </TouchableOpacity>
                 )}
               </View>
@@ -125,63 +155,120 @@ export default function StudentRegistrations() {
   );
 }
 
-function statusColor(status) {
-  if (status === "PENDING") return { backgroundColor: "#facc15", color: "black" };
-  if (status === "APPROVED") return { backgroundColor: "#22c55e", color: "black" };
-  if (status === "DECLINED" || status === "CANCELLED") return { backgroundColor: "#ef4444", color: "white" };
-  return { backgroundColor: "#64748b", color: "white" };
+/* ---------------- STATUS STYLES ---------------- */
+
+function statusStyle(status) {
+  switch (status) {
+    case "APPROVED":
+      return { backgroundColor: "#22c55e" };
+    case "PENDING":
+      return { backgroundColor: "#facc15" };
+    case "DECLINED":
+    case "CANCELLED":
+      return { backgroundColor: "#ef4444" };
+    default:
+      return { backgroundColor: "#64748b" };
+  }
 }
+
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#0f172a" },
-  loader: { flex: 1, backgroundColor: "#0f172a", justifyContent: "center", alignItems: "center" },
-  container: { padding: 16, paddingBottom: 40 },
-  header: { color: "white", fontSize: 24, fontWeight: "700", marginBottom: 12 },
-  noData: { color: "#94a3b8", textAlign: "center", marginTop: 20 },
+  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  container: { padding: 16, paddingBottom: 50 },
+
+  header: {
+    color: "white",
+    fontSize: 26,
+    fontWeight: "800",
+  },
+  subHeader: {
+    color: "#94a3b8",
+    marginBottom: 20,
+  },
+
+  noData: {
+    color: "#94a3b8",
+    textAlign: "center",
+    marginTop: 40,
+  },
 
   card: {
     backgroundColor: "#1e293b",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#334155",
   },
-  row: { flexDirection: "row", alignItems: "center" },
-  title: { color: "white", fontSize: 16, fontWeight: "700" },
-  sub: { color: "#94a3b8", marginTop: 4 },
 
-  badgeContainer: {
-    marginLeft: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  badgeText: {
-    fontWeight: "700",
-    paddingHorizontal: 8,
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999,
+    marginBottom: 10,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "black",
   },
 
-  info: { color: "#cbd5e1", marginTop: 8 },
-  noteLabel: { color: "#94a3b8", marginTop: 8, fontSize: 12 },
-  noteText: { color: "#e2e8f0", marginTop: 4 },
+  title: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
 
-  actionsRow: { flexDirection: "row", marginTop: 12, justifyContent: "space-between" },
-  viewBtn: {
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  metaText: {
+    color: "#cbd5e1",
+    marginLeft: 6,
+  },
+
+  note: {
+    color: "#e2e8f0",
+    marginTop: 8,
+  },
+  ownerNote: {
+    color: "#94a3b8",
+    marginTop: 4,
+    fontStyle: "italic",
+  },
+
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+  },
+
+  primaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#2563eb",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flex: 1,
   },
-  viewBtnText: { color: "white", fontWeight: "700" },
+  primaryText: {
+    color: "white",
+    fontWeight: "700",
+    marginLeft: 6,
+  },
 
   cancelBtn: {
+    marginLeft: 10,
     backgroundColor: "#ef4444",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 12,
   },
-  cancelBtnText: { color: "white", fontWeight: "700" },
 });
