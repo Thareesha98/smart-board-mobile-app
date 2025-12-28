@@ -25,6 +25,7 @@ import DistrictSelector from "../../../components/owner/DistrictSelector";
 
 const PLACEHOLDER_COLOR = "#8e8e8e";
 
+/* ====================================================== */
 export default function CreateAd() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
@@ -33,6 +34,7 @@ export default function CreateAd() {
     title: "",
     description: "",
     pricePerMonth: "",
+    keyMoney: "",                 // ✅ ADDED
     genderType: "BOTH",
     availableSlots: "",
     maxOccupants: "",
@@ -50,15 +52,20 @@ export default function CreateAd() {
 
   const update = (k, v) => setForm({ ...form, [k]: v });
 
+  /* ===================== CREATE ===================== */
   const createAd = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      // Address combined
+      if (!form.title || !form.pricePerMonth || !form.availableSlots) {
+        Alert.alert("Missing Data", "Please fill required fields");
+        setIsSubmitting(false);
+        return;
+      }
+
       const fullAddress = `${addressLine}, ${city}, ${district}`;
 
-      // Upload images
       let imageUrls = [];
       if (images.length > 0) {
         imageUrls = await uploadMultipleImages(images, "boarding");
@@ -69,95 +76,113 @@ export default function CreateAd() {
         description: form.description,
         address: fullAddress,
         pricePerMonth: parseFloat(form.pricePerMonth),
+        keyMoney: form.keyMoney ? parseFloat(form.keyMoney) : 0, // ✅ INCLUDED
         genderType: form.genderType,
         availableSlots: parseInt(form.availableSlots),
-        maxOccupants: form.maxOccupants ? parseInt(form.maxOccupants) : null,
+        maxOccupants: form.maxOccupants
+          ? parseInt(form.maxOccupants)
+          : null,
         boardingType: form.boardingType,
         imageUrls,
         amenities,
         nearbyPlaces,
       };
 
-      await api.post(`/owner/ads/${user.id}`, payload);
+      await api.post(`/boardings/owner`, payload);
 
       Alert.alert("Success", "Boarding advertisement created!");
       router.replace("/owner/ads");
     } catch (error) {
-      console.log(error);
+      console.log("❌ create ad error", error);
       Alert.alert("Error", "Failed to create advertisement");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /* ===================== UI ===================== */
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Create Boarding Advertisement</Text>
 
       <TextInput
         style={styles.input}
-        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Title"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         value={form.title}
         onChangeText={(t) => update("title", t)}
       />
 
       <TextInput
         style={[styles.input, { height: 80 }]}
-        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Description"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         multiline
         value={form.description}
         onChangeText={(t) => update("description", t)}
       />
 
-      {/* Address fields */}
+      {/* ADDRESS */}
       <TextInput
         style={styles.input}
-        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="Number & Lane"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         value={addressLine}
         onChangeText={setAddressLine}
       />
 
       <TextInput
         style={styles.input}
-        placeholderTextColor={PLACEHOLDER_COLOR}
         placeholder="City"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         value={city}
         onChangeText={setCity}
       />
 
       <DistrictSelector value={district} onChange={setDistrict} />
 
+      {/* PRICING */}
+      <Text style={styles.sectionTitle}>Pricing</Text>
+
       <TextInput
         style={styles.input}
-        placeholder="Price per Month (Rs)"
+        placeholder="Monthly Rent (Rs)"
         placeholderTextColor={PLACEHOLDER_COLOR}
         keyboardType="numeric"
         value={form.pricePerMonth}
         onChangeText={(t) => update("pricePerMonth", t)}
       />
 
+      <TextInput
+        style={styles.input}
+        placeholder="Key Money (Rs) – optional"
+        placeholderTextColor={PLACEHOLDER_COLOR}
+        keyboardType="numeric"
+        value={form.keyMoney}
+        onChangeText={(t) => update("keyMoney", t)}
+      />
+
+      {/* CAPACITY */}
       <View style={styles.row}>
         <TextInput
           style={[styles.input, { flex: 1, marginRight: 5 }]}
-          placeholderTextColor={PLACEHOLDER_COLOR}
           placeholder="Available Slots"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           keyboardType="numeric"
           value={form.availableSlots}
           onChangeText={(t) => update("availableSlots", t)}
         />
         <TextInput
           style={[styles.input, { flex: 1, marginLeft: 5 }]}
-          placeholderTextColor={PLACEHOLDER_COLOR}
           placeholder="Max Occupants"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           keyboardType="numeric"
           value={form.maxOccupants}
           onChangeText={(t) => update("maxOccupants", t)}
         />
       </View>
 
+      {/* SELECTORS */}
       <GenderSelector
         value={form.genderType}
         onChange={(val) => update("genderType", val)}
@@ -168,15 +193,23 @@ export default function CreateAd() {
         onChange={(val) => update("boardingType", val)}
       />
 
-      <AmenitiesSelector amenities={amenities} setAmenities={setAmenities} />
+      <AmenitiesSelector
+        amenities={amenities}
+        setAmenities={setAmenities}
+      />
 
-      <NearbyPlaces places={nearbyPlaces} setPlaces={setNearbyPlaces} />
+      <NearbyPlaces
+        places={nearbyPlaces}
+        setPlaces={setNearbyPlaces}
+      />
 
+      {/* IMAGES */}
       <Text style={styles.sectionTitle}>Images</Text>
+
       <ImagePickerComponent
         images={images}
         setImages={setImages}
-        multiple={true}
+        multiple
       />
 
       <View style={styles.previewRow}>
@@ -194,9 +227,12 @@ export default function CreateAd() {
   );
 }
 
+/* ===================== STYLES ===================== */
+
 const styles = StyleSheet.create({
   container: { padding: 15, marginTop: 30 },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 15 },
+
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -205,23 +241,26 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "white",
     color: "black",
-  
   },
+
   row: {
     flexDirection: "row",
     marginBottom: 10,
   },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginTop: 15,
-    marginBottom: 5,
+    marginTop: 18,
+    marginBottom: 6,
   },
+
   previewRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginVertical: 10,
   },
+
   preview: {
     width: 80,
     height: 80,
