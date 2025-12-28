@@ -61,6 +61,7 @@ export default function BoardingDetailScreen() {
     description,
     address,
     pricePerMonth,
+    keyMoney,                // ✅ ADDED
     imageUrls,
     genderType,
     boardingType,
@@ -69,7 +70,6 @@ export default function BoardingDetailScreen() {
     amenities,
     nearbyPlaces,
     boosted,
-    boostEndDate,
   } = boarding;
 
   return (
@@ -90,34 +90,38 @@ export default function BoardingDetailScreen() {
           ref={carouselRef}
         >
           {imageUrls?.map((url, idx) => (
-            <Image
-              key={idx}
-              source={{ uri: url }}
-              style={styles.image}
-            />
+            <Image key={idx} source={{ uri: url }} style={styles.image} />
           ))}
         </ScrollView>
 
-        {/* Carousel dots */}
+        {/* Dots */}
         <View style={styles.dotContainer}>
           {imageUrls?.map((_, idx) => (
             <View
               key={idx}
-              style={[
-                styles.dot,
-                activeImage === idx && styles.dotActive,
-              ]}
+              style={[styles.dot, activeImage === idx && styles.dotActive]}
             />
           ))}
         </View>
 
-        {/* Content */}
+        {/* CONTENT */}
         <View style={styles.content}>
 
+          {/* TITLE + PRICE */}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.price}>Rs {pricePerMonth}</Text>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={styles.price}>Rs {pricePerMonth}</Text>
+              <Text style={styles.priceHint}>per month</Text>
+            </View>
           </View>
+
+          {keyMoney > 0 && (
+            <View style={styles.keyMoneyBox}>
+              <Text style={styles.keyMoneyLabel}>Key Money</Text>
+              <Text style={styles.keyMoneyValue}>Rs {keyMoney}</Text>
+            </View>
+          )}
 
           <Text style={styles.address}>{address}</Text>
 
@@ -129,11 +133,11 @@ export default function BoardingDetailScreen() {
             {boosted ? <Tag label="Boosted" highlight /> : null}
           </View>
 
-          {/* Description */}
+          {/* DESCRIPTION */}
           <SectionTitle label="Description" />
           <Text style={styles.description}>{description}</Text>
 
-          {/* Amenities */}
+          {/* AMENITIES */}
           {amenities?.length > 0 && (
             <>
               <SectionTitle label="Amenities" />
@@ -145,7 +149,7 @@ export default function BoardingDetailScreen() {
             </>
           )}
 
-          {/* Nearby Places */}
+          {/* NEARBY PLACES */}
           {nearbyPlaces && Object.keys(nearbyPlaces).length > 0 && (
             <>
               <SectionTitle label="Nearby Places" />
@@ -160,23 +164,25 @@ export default function BoardingDetailScreen() {
             </>
           )}
 
-          {/* Buttons */}
+          {/* ACTIONS */}
           <View style={styles.buttonWrapper}>
             <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => router.push(`/student/boardings/${id}/request-visit`)}
-                >
-                <Text style={styles.primaryButtonText}>Request Visit</Text>
-                </TouchableOpacity>
-
+              style={styles.primaryButton}
+              onPress={() =>
+                router.push(`/student/boardings/${id}/request-visit`)
+              }
+            >
+              <Text style={styles.primaryButtonText}>Request Visit</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => router.push(`/student/boardings/${id}/register`)}
+              onPress={() =>
+                router.push(`/student/boardings/${id}/register`)
+              }
             >
               <Text style={styles.secondaryButtonText}>Register / Book</Text>
             </TouchableOpacity>
-
 
             <TouchableOpacity style={styles.dangerButton}>
               <Text style={styles.dangerButtonText}>Report Issue</Text>
@@ -190,7 +196,7 @@ export default function BoardingDetailScreen() {
   );
 }
 
-/* 🔹 Reusable Components */
+/* ================= REUSABLE ================= */
 
 function Tag({ label, highlight }) {
   return (
@@ -212,16 +218,12 @@ function SectionTitle({ label }) {
   return <Text style={styles.sectionTitle}>{label}</Text>;
 }
 
-/* 🎨 Styles */
+/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-  },
-  container: {
-    flex: 1,
-  },
+  safeArea: { flex: 1, backgroundColor: "#0f172a" },
+  container: { flex: 1 },
+
   loaderContainer: {
     flex: 1,
     backgroundColor: "#0f172a",
@@ -229,11 +231,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  /* Carousel */
-  image: {
-    width: width,
-    height: 260,
-  },
+  image: { width, height: 260 },
+
   dotContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -246,54 +245,58 @@ const styles = StyleSheet.create({
     backgroundColor: "#475569",
     marginHorizontal: 4,
   },
-  dotActive: {
-    backgroundColor: "#3b82f6",
-  },
+  dotActive: { backgroundColor: "#3b82f6" },
 
-  /* Content */
-  content: {
-    padding: 16,
-  },
+  content: { padding: 16 },
+
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
   },
-  title: {
-    flex: 1,
-    color: "white",
-    fontSize: 22,
-    fontWeight: "700",
+
+  title: { color: "white", fontSize: 22, fontWeight: "700", flex: 1 },
+
+  price: { color: "#22c55e", fontSize: 20, fontWeight: "800" },
+  priceHint: { color: "#94a3b8", fontSize: 12 },
+
+  /* ✅ KEY MONEY */
+  keyMoneyBox: {
+    backgroundColor: "#1e293b",
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#334155",
   },
-  price: {
-    color: "#22c55e",
+  keyMoneyLabel: {
+    color: "#94a3b8",
+    fontSize: 13,
+  },
+  keyMoneyValue: {
+    color: "#facc15",
     fontSize: 18,
     fontWeight: "700",
+    marginTop: 4,
   },
-  address: {
-    color: "#94a3b8",
-    fontSize: 14,
-    marginVertical: 6,
-  },
+
+  address: { color: "#94a3b8", fontSize: 14, marginVertical: 6 },
+
   tagRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
     marginVertical: 8,
   },
+
   tag: {
     backgroundColor: "#1e293b",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
   },
-  tagHighlight: {
-    backgroundColor: "#2563eb",
-  },
-  tagText: {
-    color: "white",
-    fontSize: 12,
-  },
+  tagHighlight: { backgroundColor: "#2563eb" },
+  tagText: { color: "white", fontSize: 12 },
 
   sectionTitle: {
     color: "#f1f5f9",
@@ -302,31 +305,19 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 6,
   },
-  description: {
-    color: "#cbd5e1",
-    lineHeight: 20,
-    fontSize: 14,
-  },
 
-  chipWrapper: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
+  description: { color: "#cbd5e1", lineHeight: 20, fontSize: 14 },
+
+  chipWrapper: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   chip: {
     backgroundColor: "#1e293b",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
-  chipText: {
-    color: "white",
-    fontSize: 13,
-  },
+  chipText: { color: "white", fontSize: 13 },
 
-  nearbyWrapper: {
-    marginTop: 6,
-  },
+  nearbyWrapper: { marginTop: 6 },
   nearbyItem: {
     backgroundColor: "#1e293b",
     padding: 12,
@@ -338,15 +329,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
-  nearbyDistance: {
-    color: "#38bdf8",
-    marginTop: 2,
-  },
+  nearbyDistance: { color: "#38bdf8", marginTop: 2 },
 
-  buttonWrapper: {
-    marginTop: 20,
-    gap: 12,
-  },
+  buttonWrapper: { marginTop: 20, gap: 12 },
+
   primaryButton: {
     backgroundColor: "#2563eb",
     padding: 14,
@@ -358,6 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
   secondaryButton: {
     backgroundColor: "#22c55e",
     padding: 14,
@@ -369,6 +356,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
   dangerButton: {
     backgroundColor: "#dc2626",
     padding: 14,
