@@ -12,7 +12,7 @@ export default function OwnerAdsList() {
 
   const loadAds = async () => {
     try {
-      const res = await api.get(`/owner/ads/${user.id}`);
+      const res = await api.get(`/boardings/owner`);
       setAds(res.data);
     } catch (err) {
       console.log(err);
