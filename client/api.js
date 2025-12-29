@@ -45,7 +45,7 @@
 import axios from "axios";
 import { getToken } from "./authStorage";
 
-const API_BASE = "http://192.168.8.104:8088/api"; // IMPORTANT FIX
+const API_BASE = "http://192.168.8.104:8086/api"; // IMPORTANT FIX
 
 const api = axios.create({
   baseURL: API_BASE,
