@@ -24,6 +24,9 @@ import AmenitiesSelector from "../../../../components/owner/AmenitiesSelector";
 import NearbyPlaces from "../../../../components/owner/NearbyPlaces";
 import DistrictSelector from "../../../../components/owner/DistrictSelector";
 
+const PLACEHOLDER_COLOR = "#8e8e8e";
+
+/* ====================================================== */
 export default function EditAd() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -40,9 +43,10 @@ export default function EditAd() {
   const [amenities, setAmenities] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState({});
 
+  /* ================= LOAD ================= */
   const loadAd = async () => {
     try {
-      const res = await api.get(`/owner/ads/${user.id}`);
+      const res = await api.get(`/boardings/owner`);
       const found = res.data.find((a) => a.id == id);
 
       if (!found) {
@@ -51,20 +55,21 @@ export default function EditAd() {
         return;
       }
 
-      // Address split
       const parts = (found.address || "").split(",").map((p) => p.trim());
-
       setAddressLine(parts[0] || "");
       setCity(parts[1] || "");
       setDistrict(parts[2] || "Colombo");
 
       setForm({
-        title: found.title,
-        description: found.description,
-        pricePerMonth: String(found.pricePerMonth),
+        title: found.title || "",
+        description: found.description || "",
+        pricePerMonth: String(found.pricePerMonth || ""),
+        keyMoney: String(found.keyMoney || ""),          // ✅ ADDED
         genderType: found.genderType || "BOTH",
-        availableSlots: String(found.availableSlots || 0),
-        maxOccupants: found.maxOccupants ? String(found.maxOccupants) : "",
+        availableSlots: String(found.availableSlots || ""),
+        maxOccupants: found.maxOccupants
+          ? String(found.maxOccupants)
+          : "",
         boardingType: found.boardingType || "ROOM",
       });
 
@@ -72,16 +77,14 @@ export default function EditAd() {
       setAmenities(found.amenities || []);
       setNearbyPlaces(found.nearbyPlaces || {});
       setNewImages([]);
-
     } catch (err) {
-      console.log(err);
+      console.log("❌ load ad error", err);
       Alert.alert("Error", "Failed to load advertisement");
     }
   };
 
-  const update = (key, value) => {
-    setForm({ ...form, [key]: value });
-  };
+  const update = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const removeExistingImage = (index) => {
     const arr = [...existingImages];
@@ -89,55 +92,61 @@ export default function EditAd() {
     setExistingImages(arr);
   };
 
-  const save = async () => {
-    try {
-      let uploadedNewImages = [];
-      if (newImages.length > 0) {
-        uploadedNewImages = await uploadMultipleImages(newImages, "boarding");
-      }
+  /* ================= SAVE ================= */
 
-      const finalImageUrls = [...existingImages, ...uploadedNewImages];
-
-      // Build full address
-      const fullAddress = `${addressLine}, ${city}, ${district}`;
-
-      const payload = {
-        title: form.title,
-        description: form.description,
-        address: fullAddress,
-        pricePerMonth: parseFloat(form.pricePerMonth),
-        genderType: form.genderType,
-        availableSlots: parseInt(form.availableSlots || "0", 10),
-        maxOccupants: form.maxOccupants
-          ? parseInt(form.maxOccupants, 10)
-          : null,
-        boardingType: form.boardingType,
-        imageUrls: finalImageUrls,
-        amenities,
-        nearbyPlaces,
-      };
-
-      await api.put(`/owner/ads/${user.id}/${id}`, payload);
-
-      Alert.alert("Success", "Advertisement updated successfully!");
-      router.back();
-
-    } catch (err) {
-      console.log(err);
-      Alert.alert("Error", "Failed to update advertisement");
+/* ================= SAVE ================= */
+const save = async () => {
+  try {
+    let uploadedNewImages = [];
+    if (newImages.length > 0) {
+      uploadedNewImages = await uploadMultipleImages(newImages, "boarding");
     }
-  };
 
-  const removeAd = async () => {
-    try {
-      await api.delete(`/owner/ads/${user.id}/${id}`);
-      Alert.alert("Deleted", "Advertisement deleted successfully");
-      router.replace("/owner/ads");
-    } catch (err) {
-      console.log(err);
-      Alert.alert("Error", "Failed to delete advertisement");
-    }
-  };
+    const finalImageUrls = [...existingImages, ...uploadedNewImages];
+    const fullAddress = `${addressLine}, ${city}, ${district}`;
+
+    const payload = {
+      title: form.title,
+      description: form.description,
+      address: fullAddress,
+      pricePerMonth: parseFloat(form.pricePerMonth),
+      keyMoney: form.keyMoney ? parseFloat(form.keyMoney) : 0,
+      genderType: form.genderType,
+      availableSlots: parseInt(form.availableSlots || "0", 10),
+      maxOccupants: form.maxOccupants
+        ? parseInt(form.maxOccupants, 10)
+        : null,
+      boardingType: form.boardingType,
+      imageUrls: finalImageUrls,
+      amenities,
+      nearbyPlaces,
+    };
+
+    // ✅ JWT-based update (NO ownerId)
+    await api.put(`/boardings/owner/${id}`, payload);
+
+    Alert.alert("Success", "Advertisement updated successfully!");
+    router.back();
+  } catch (err) {
+    console.log("❌ update error", err?.response?.data || err);
+    Alert.alert("Error", "Failed to update advertisement");
+  }
+};
+
+/* ================= DELETE ================= */
+const removeAd = async () => {
+  try {
+    // ✅ JWT-based delete (NO ownerId)
+    await api.delete(`/boardings/owner/${id}`);
+    Alert.alert("Deleted", "Advertisement deleted successfully");
+    router.replace("/owner/ads");
+  } catch (err) {
+    console.log("❌ delete error", err?.response?.data || err);
+    Alert.alert("Error", "Failed to delete advertisement");
+  }
+};
+
+
 
   useEffect(() => {
     loadAd();
@@ -151,29 +160,30 @@ export default function EditAd() {
     );
   }
 
+  /* ================= UI ================= */
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Edit Boarding Advertisement</Text>
 
-      {/* TITLE */}
       <TextInput
         style={styles.input}
         value={form.title}
         onChangeText={(t) => update("title", t)}
         placeholder="Title"
+        placeholderTextColor={PLACEHOLDER_COLOR}
       />
 
-      {/* DESCRIPTION */}
       <TextInput
         style={[styles.input, { height: 80 }]}
         value={form.description}
         onChangeText={(t) => update("description", t)}
         placeholder="Description"
+        placeholderTextColor={PLACEHOLDER_COLOR}
         multiline
       />
 
-      {/* ADDRESS */}
       <Text style={styles.sectionTitle}>Address</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Number & Lane"
@@ -189,16 +199,24 @@ export default function EditAd() {
 
       <DistrictSelector value={district} onChange={setDistrict} />
 
-      {/* PRICE */}
+      <Text style={styles.sectionTitle}>Pricing</Text>
+
       <TextInput
         style={styles.input}
         value={form.pricePerMonth}
         onChangeText={(t) => update("pricePerMonth", t)}
-        placeholder="Price Per Month"
+        placeholder="Monthly Rent (Rs)"
         keyboardType="numeric"
       />
 
-      {/* SLOTS */}
+      <TextInput
+        style={styles.input}
+        value={form.keyMoney}
+        onChangeText={(t) => update("keyMoney", t)}
+        placeholder="Key Money (Rs) – optional"
+        keyboardType="numeric"
+      />
+
       <View style={styles.row}>
         <TextInput
           style={[styles.input, { flex: 1, marginRight: 5 }]}
@@ -216,22 +234,17 @@ export default function EditAd() {
         />
       </View>
 
-      {/* GENDER */}
       <GenderSelector
         value={form.genderType}
         onChange={(val) => update("genderType", val)}
       />
 
-      {/* BOARDING TYPE */}
       <BoardingTypeSelector
         value={form.boardingType}
         onChange={(val) => update("boardingType", val)}
       />
 
-      {/* AMENITIES */}
       <AmenitiesSelector amenities={amenities} setAmenities={setAmenities} />
-
-      {/* NEARBY PLACES */}
       <NearbyPlaces places={nearbyPlaces} setPlaces={setNearbyPlaces} />
 
       <Text style={styles.sectionTitle}>Images</Text>
@@ -245,17 +258,16 @@ export default function EditAd() {
               style={styles.deleteBtn}
               onPress={() => removeExistingImage(idx)}
             >
-              <Text style={styles.deleteTxt}>X</Text>
+              <Text style={styles.deleteTxt}>×</Text>
             </TouchableOpacity>
           </View>
         ))}
       </View>
 
-      {/* New images */}
       <ImagePickerComponent
         images={newImages}
         setImages={setNewImages}
-        multiple={true}
+        multiple
       />
 
       <View style={styles.previewRow}>
@@ -264,25 +276,20 @@ export default function EditAd() {
         ))}
       </View>
 
-      {/* SAVE */}
       <Button title="Save Changes" onPress={save} />
-
       <View style={{ height: 10 }} />
-
-      {/* DELETE */}
       <Button title="Delete Advertisement" color="red" onPress={removeAd} />
     </ScrollView>
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
-  loadingBox: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  loadingBox: { flex: 1, justifyContent: "center", alignItems: "center" },
   container: { padding: 15, marginTop: 30 },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 15 },
+
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -290,19 +297,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     backgroundColor: "white",
+    color: "black",
   },
+
   row: { flexDirection: "row", marginBottom: 10 },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginTop: 15,
     marginBottom: 5,
   },
+
   previewRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginVertical: 10,
   },
+
   preview: {
     width: 80,
     height: 80,
@@ -310,6 +322,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginBottom: 10,
   },
+
   deleteBtn: {
     position: "absolute",
     top: -5,
@@ -321,9 +334,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   deleteTxt: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 14,
   },
 });
