@@ -1,103 +1,57 @@
-/*import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
 import { AuthProvider, AuthContext } from "../auth/AuthContext";
 import { useContext, useEffect } from "react";
 
-function NavigationGate() {
+function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
   const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
     if (loading) return;
 
-    const inAuth = segments[0] === undefined || segments[0] === "register" || segments[0] === "login";
-
-    if (!user && !inAuth) {
-      router.replace("/");
-      return;
+    if (user?.role === "STUDENT") {
+      router.replace("/(tabs)/student/dashboard");
+    } else if (user?.role === "OWNER") {
+      router.replace("/(tabs)/owner/dashboard");
     }
+  }, [loading, user]);
 
-    if (user && inAuth) {
-      if (user.role === "OWNER") router.replace("/owner/home");
-      else if (user.role === "STUDENT") router.replace("/student/home");
-      else if (user.role === "ADMIN") router.replace("/admin/home");
-    }
-  }, [user, loading, segments]);
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#38bdf8" />
+      </View>
+    );
+  }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
-}
-
-export default function RootLayout() {
   return (
-    <AuthProvider>
-      <NavigationGate />
-    </AuthProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      {!user && (
+        <>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="reset-password" />
+          <Stack.Screen name="verify-otp" />
+        </>
+      )}
+
+      {user?.role === "STUDENT" && (
+        <Stack.Screen name="(tabs)/student" />
+      )}
+
+      {user?.role === "OWNER" && (
+        <Stack.Screen name="(tabs)/owner" />
+      )}
+    </Stack>
   );
 }
-*/
-
-
-
-
-
-import { Stack, useRouter, useSegments } from "expo-router";
-import { AuthProvider, AuthContext } from "../auth/AuthContext";
-import { useContext, useEffect } from "react";
-
-function NavigationGate() {
-  const { user, loading } = useContext(AuthContext);
-  const router = useRouter();
-  const segments = useSegments();
-
-  useEffect(() => {
-    if (loading) return;
-
-    /**
-     * segments example:
-     *  [] → /
-     *  ["register"]
-     *  ["verify-otp"]
-     *  ["student", "home"]
-     */
-
-    const firstSegment = segments[0];
-
-    const authRoutes = [
-      undefined,        // "/"
-      "login",
-      "register",
-      "verify-otp",
-      "forgot-password",
-      "reset-password", 
-    ];
-
-    const isAuthRoute = authRoutes.includes(firstSegment);
-
-    // 🔒 NOT logged in → block protected routes
-    if (!user && !isAuthRoute) {
-      router.replace("/");
-      return;
-    }
-
-    // 🚀 Logged in → block auth pages
-    if (user && isAuthRoute) {
-      if (user.role === "OWNER") {
-        router.replace("/owner/home");
-      } else if (user.role === "STUDENT") {
-        router.replace("/student/home");
-      } else if (user.role === "ADMIN") {
-        router.replace("/admin/home");
-      }
-    }
-  }, [user, loading, segments]);
-
-  return <Stack screenOptions={{ headerShown: false }} />;
-}
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <NavigationGate />
+      <RootNavigator />
     </AuthProvider>
   );
 }
