@@ -36,10 +36,14 @@ export default function Login() {
 
       await login(token, refreshToken, user);
 
-      if (user.role === "STUDENT") router.replace("/student/home");
+     /* if (user.role === "STUDENT") router.replace("/student/home");
       else if (user.role === "OWNER") router.replace("/owner/home");
       else if (user.role === "ADMIN") router.replace("/admin/home");
-      else Alert.alert("Error", "Unknown user role");
+      else Alert.alert("Error", "Unknown user role");*/
+      if (user.role === "STUDENT") router.replace("/(tabs)/student/dashboard");
+      else if (user.role === "OWNER") router.replace("/(tabs)/owner/dashboard");
+      else if (user.role === "ADMIN") router.replace("/admin/home");
+
 
     } catch (err) {
       console.log(err);
