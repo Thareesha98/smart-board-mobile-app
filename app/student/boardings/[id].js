@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   Dimensions,
   SafeAreaView,
+  Alert
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import api from "../../../client/api";
 
 const { width } = Dimensions.get("window");
+const ACTION_BAR_HEIGHT = 96;
 
 export default function BoardingDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -61,32 +63,55 @@ export default function BoardingDetailScreen() {
     description,
     address,
     pricePerMonth,
-    keyMoney,                // ✅ ADDED
+    keyMoney,
     imageUrls,
     genderType,
     boardingType,
     availableSlots,
-    maxOccupants,
     amenities,
     nearbyPlaces,
-    boosted,
   } = boarding;
+
+  const startChat = async () => {
+  try {
+    const res = await api.post("/chats", {
+      boardingId: Number(id),
+    });
+
+    const { chatRoomId } = res.data;
+
+    if (!chatRoomId) {
+      throw new Error("Chat room ID missing");
+    }
+
+    router.push(`/chat/${chatRoomId}`);
+  } catch (error) {
+    console.log("❌ Failed to start chat:", error);
+    Alert.alert(
+      "Chat unavailable",
+      "Unable to start conversation. Please try again."
+    );
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-        
-        {/* 🔹 Image Carousel */}
+      {/* SCROLLABLE CONTENT */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: ACTION_BAR_HEIGHT + 24 }}
+      >
+        {/* IMAGE CAROUSEL */}
         <ScrollView
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={(e) => {
-            const index = Math.round(
-              e.nativeEvent.contentOffset.x / width
-            );
-            setActiveImage(index);
-          }}
+          onScroll={(e) =>
+            setActiveImage(
+              Math.round(e.nativeEvent.contentOffset.x / width)
+            )
+          }
           ref={carouselRef}
         >
           {imageUrls?.map((url, idx) => (
@@ -94,7 +119,7 @@ export default function BoardingDetailScreen() {
           ))}
         </ScrollView>
 
-        {/* Dots */}
+        {/* DOTS */}
         <View style={styles.dotContainer}>
           {imageUrls?.map((_, idx) => (
             <View
@@ -106,22 +131,20 @@ export default function BoardingDetailScreen() {
 
         {/* CONTENT */}
         <View style={styles.content}>
-
           {/* TITLE + PRICE */}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{title}</Text>
-            <View style={{ alignItems: "flex-end" }}>
+
+            <View style={styles.priceBox}>
               <Text style={styles.price}>Rs {pricePerMonth}</Text>
               <Text style={styles.priceHint}>per month</Text>
+              {keyMoney > 0 && (
+                <Text style={styles.keyMoneySmall}>
+                  Key money: Rs {keyMoney}
+                </Text>
+              )}
             </View>
           </View>
-
-          {keyMoney > 0 && (
-            <View style={styles.keyMoneyBox}>
-              <Text style={styles.keyMoneyLabel}>Key Money</Text>
-              <Text style={styles.keyMoneyValue}>Rs {keyMoney}</Text>
-            </View>
-          )}
 
           <Text style={styles.address}>{address}</Text>
 
@@ -129,8 +152,6 @@ export default function BoardingDetailScreen() {
             <Tag label={genderType} />
             <Tag label={boardingType} />
             <Tag label={`${availableSlots} slots`} />
-            {maxOccupants ? <Tag label={`Max: ${maxOccupants}`} /> : null}
-            {boosted ? <Tag label="Boosted" highlight /> : null}
           </View>
 
           {/* DESCRIPTION */}
@@ -163,44 +184,67 @@ export default function BoardingDetailScreen() {
               </View>
             </>
           )}
-
-          {/* ACTIONS */}
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() =>
-                router.push(`/student/boardings/${id}/request-visit`)
-              }
-            >
-              <Text style={styles.primaryButtonText}>Request Visit</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() =>
-                router.push(`/student/boardings/${id}/register`)
-              }
-            >
-              <Text style={styles.secondaryButtonText}>Register / Book</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.dangerButton}>
-              <Text style={styles.dangerButtonText}>Report Issue</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={{ height: 40 }} />
         </View>
       </ScrollView>
+
+      {/* 🔥 FINAL MODERN BOTTOM ACTION BAR */}
+      <View style={styles.actionBar}>
+        <ActionBtn icon="📞" label="Call" style={styles.callBtn} />
+
+          <ActionBtn
+            icon="💬"
+            label="Message"
+            style={styles.msgBtn}
+            onPress={startChat}
+          />
+
+
+        <ActionBtn
+          icon="📅"
+          label="Visit"
+          style={styles.visitBtn}
+          onPress={() =>
+            router.push(`/student/boardings/${id}/request-visit`)
+          }
+        />
+
+        <ActionBtn
+          icon="🏠"
+          label="Book"
+          style={styles.bookBtn}
+          onPress={() =>
+            router.push(`/student/boardings/${id}/register`)
+          }
+        />
+
+        <ActionBtn
+          icon="⚠️"
+          label="Report"
+          style={styles.reportBtn}
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
 /* ================= REUSABLE ================= */
 
-function Tag({ label, highlight }) {
+function ActionBtn({ icon, label, onPress, style }) {
   return (
-    <View style={[styles.tag, highlight && styles.tagHighlight]}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={[styles.actionBtn, style]}
+    >
+      <Text style={styles.actionIcon}>{icon}</Text>
+      <Text style={styles.actionText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function Tag({ label }) {
+  return (
+    <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
     </View>
   );
@@ -222,7 +266,6 @@ function SectionTitle({ label }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#0f172a" },
-  container: { flex: 1 },
 
   loaderContainer: {
     flex: 1,
@@ -252,42 +295,18 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
   },
 
   title: { color: "white", fontSize: 22, fontWeight: "700", flex: 1 },
 
+  priceBox: { alignItems: "flex-end" },
   price: { color: "#22c55e", fontSize: 20, fontWeight: "800" },
   priceHint: { color: "#94a3b8", fontSize: 12 },
+  keyMoneySmall: { color: "#facc15", fontSize: 11, marginTop: 4 },
 
-  /* ✅ KEY MONEY */
-  keyMoneyBox: {
-    backgroundColor: "#1e293b",
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#334155",
-  },
-  keyMoneyLabel: {
-    color: "#94a3b8",
-    fontSize: 13,
-  },
-  keyMoneyValue: {
-    color: "#facc15",
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 4,
-  },
+  address: { color: "#94a3b8", marginVertical: 6 },
 
-  address: { color: "#94a3b8", fontSize: 14, marginVertical: 6 },
-
-  tagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginVertical: 8,
-  },
+  tagRow: { flexDirection: "row", gap: 8, marginVertical: 8 },
 
   tag: {
     backgroundColor: "#1e293b",
@@ -295,18 +314,17 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
   },
-  tagHighlight: { backgroundColor: "#2563eb" },
   tagText: { color: "white", fontSize: 12 },
 
   sectionTitle: {
     color: "#f1f5f9",
     fontSize: 18,
     fontWeight: "600",
-    marginTop: 14,
+    marginTop: 16,
     marginBottom: 6,
   },
 
-  description: { color: "#cbd5e1", lineHeight: 20, fontSize: 14 },
+  description: { color: "#cbd5e1", lineHeight: 20 },
 
   chipWrapper: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   chip: {
@@ -315,7 +333,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 12,
   },
-  chipText: { color: "white", fontSize: 13 },
+  chipText: { color: "white" },
 
   nearbyWrapper: { marginTop: 6 },
   nearbyItem: {
@@ -324,48 +342,45 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  nearbyName: {
-    color: "#f8fafc",
-    fontSize: 15,
-    fontWeight: "600",
+  nearbyName: { color: "#f8fafc", fontWeight: "600" },
+  nearbyDistance: { color: "#38bdf8" },
+
+  /* 🔥 CLEAN MODERN ACTION BAR */
+  actionBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: ACTION_BAR_HEIGHT,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#020617f2",
+    borderTopWidth: 1,
+    borderColor: "#1e293b",
   },
-  nearbyDistance: { color: "#38bdf8", marginTop: 2 },
 
-  buttonWrapper: { marginTop: 20, gap: 12 },
-
-  primaryButton: {
-    backgroundColor: "#2563eb",
-    padding: 14,
-    borderRadius: 12,
+  actionBtn: {
+    flex: 1,
+    borderColor: "gray",
+    borderWidth: 0.5,
+    borderRadius: 16,
     alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
+    justifyContent: "center",
   },
 
-  secondaryButton: {
-    backgroundColor: "#22c55e",
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  secondaryButtonText: {
+  actionIcon: { fontSize: 18 },
+  actionText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: "600",
+    marginTop: 2,
   },
 
-  dangerButton: {
-    backgroundColor: "#dc2626",
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  dangerButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  callBtn: { backgroundColor: "#334155" },
+  msgBtn: { backgroundColor: "#312e81" },
+  visitBtn: { backgroundColor: "#2563eb" },
+  bookBtn: { backgroundColor: "#16a34a" },
+  reportBtn: { backgroundColor: "#991b1b" },
 });
