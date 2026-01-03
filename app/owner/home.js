@@ -6,14 +6,34 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert
 } from "react-native";
 import { AuthContext } from "../../auth/AuthContext";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function OwnerHome() {
-  const { user } = useContext(AuthContext);
+  const { user , logout } = useContext(AuthContext);
   const router = useRouter();
+
+  const handleLogout = () => {
+  Alert.alert(
+    "Logout",
+    "Are you sure you want to logout?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          router.replace("/"); 
+        },
+      },
+    ]
+  );
+};
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -90,6 +110,18 @@ export default function OwnerHome() {
             <Text style={styles.maintenanceHint}>Tap to manage</Text>
           </TouchableOpacity>
 
+          {/* Chats */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[styles.statCard , styles.chatCard]}
+            onPress={() => router.push("/chat")}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={26} color="#38bdf8" />
+            <Text style={styles.statValue}>Chats</Text>
+            <Text style={styles.statLabel}>Messages</Text>
+          </TouchableOpacity>
+
+
         </View>
 
 
@@ -114,6 +146,12 @@ export default function OwnerHome() {
           <HealthRow label="Payment Success" value="96%" color="#facc15" />
         </View>
       </ScrollView>
+      {/* LOGOUT */}
+<TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+  <Ionicons name="log-out-outline" size={18} color="white" />
+  <Text style={styles.logoutText}>Logout</Text>
+</TouchableOpacity>
+
     </SafeAreaView>
   );
 }
@@ -226,6 +264,12 @@ const styles = StyleSheet.create({
     color: "#fb923c",
   },
 
+  chatCard: {
+  borderColor: "#38bdf8",
+  borderWidth: 1.5,
+},
+
+
   /* ---------- REVENUE ---------- */
 
   chartCard: {
@@ -293,4 +337,22 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 15,
   },
+
+  logoutBtn: {
+  marginTop: 30,
+  backgroundColor: "#ef4444",
+  paddingVertical: 14,
+  borderRadius: 16,
+  flexDirection: "row",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 8,
+},
+
+logoutText: {
+  color: "white",
+  fontWeight: "800",
+  fontSize: 16,
+},
+
 });
